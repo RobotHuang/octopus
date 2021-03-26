@@ -191,6 +191,18 @@ func (m *MySQL) DeleteObjectAcl(aclID string) error {
 	return m.Database.Where("acl_id = ?", aclID).Delete(&ObjectACL{}).Error
 }
 
+func (m *MySQL) SaveMetadata(id, metadata string) error {
+	// save metadata
+	objectMetadata := ObjectMetadata{MetadataID: id, Metadata: metadata}
+	return m.Database.Create(&objectMetadata).Error
+}
+
+func (m *MySQL) GetMetadata(id string) ObjectMetadata {
+	var metadata ObjectMetadata
+	m.Database.Where("metadata_id = ?", id).First(&metadata)
+	return metadata
+}
+
 // save the acl, metadata and oid
 func (m *MySQL) SaveObjectTransaction(objectName string, oid string, metadata string, acl string, isMultipart bool) (err error) {
 	tx := m.Database.Begin()
