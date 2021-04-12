@@ -7,53 +7,53 @@ import (
 	"time"
 )
 
-type Ceph struct {
+type Rados struct {
 	Conn *rados.Conn
 	Pools map[string]bool
 }
 
-func NewCeph() (*Ceph, error) {
+func NewRados() (*Rados, error) {
 	conn, err := rados.NewConn()
 	if err != nil {
 		return nil, err
 	}
-	ceph := &Ceph{
+	ceph := &Rados{
 		Conn: conn,
 		Pools: make(map[string]bool),
 	}
 
-	runtime.SetFinalizer(ceph, finalizerCeph)
+	runtime.SetFinalizer(ceph, finalizerRados)
 	return ceph, nil
 }
 
-func NewCephWithArgs(user, monitors, keyring string) (*Ceph, error) {
+func NewRadosWithArgs(user, monitors, keyring string) (*Rados, error) {
 	conn, err := rados.NewConnWithUser(user)
 	if err != nil {
 		err = fmt.Errorf("NewConn failed")
 		return nil, err
 	}
-	keyfile := fmt.Sprintf("--keyfile=%v", keyring)
-	args := []string{"-m", monitors, keyfile}
+	keyFile := fmt.Sprintf("--keyFile=%v", keyring)
+	args := []string{"-m", monitors, keyFile}
 	err = conn.ParseCmdLineArgs(args)
 	if err != nil {
 		err = fmt.Errorf("ParseCmdLineArgs failed")
 		return nil, err
 	}
-	ceph := &Ceph{
+	r := &Rados{
 		Conn: conn,
 		Pools: make(map[string]bool),
 	}
-	return ceph, nil
+	return r, nil
 }
 
-func (c *Ceph) InitDefault() error {
-	err := c.Conn.ReadDefaultConfigFile()
+func (r *Rados) InitDefault() error {
+	err := r.Conn.ReadDefaultConfigFile()
 	if err != nil {
 		return err
 	}
 	ch := make(chan error)
 	go func() {
-		ch <- c.Conn.Connect()
+		ch <- r.Conn.Connect()
 	}()
 	select {
 	case err = <-ch:
@@ -64,7 +64,7 @@ func (c *Ceph) InitDefault() error {
 		return err
 	}
 	fmt.Println("connect ceph cluster successfully")
-	err = c.InitPools()
+	err = r.InitPools()
 	if err != nil {
 		return err
 	}
@@ -78,43 +78,43 @@ const (
 )
 
 // InitPools creates the pools the go-rgw needs
-func (c *Ceph) InitPools() error {
-	existedPools, err := c.Conn.ListPools()
+func (r *Rados) InitPools() error {
+	existedPools, err := r.Conn.ListPools()
 	if err != nil {
 		return err
 	}
 	// determine whether pools already have existed
 	for _, value := range existedPools {
 		if value == BucketData {
-			c.Pools[BucketData] = true
+			r.Pools[BucketData] = true
 		}
 	}
 	// if pool doesn't exist, create the pool.
-	if _, ok := c.Pools[BucketData]; !ok || !c.Pools[BucketData] {
-		err := c.createPool(BucketData)
+	if _, ok := r.Pools[BucketData]; !ok || !r.Pools[BucketData] {
+		err := r.createPool(BucketData)
 		if err != nil {
 			return err
 		}
-		c.Pools[BucketData] = true
+		r.Pools[BucketData] = true
 	}
 	return nil
 }
 
 // create pool
-func (c *Ceph) createPool(name string) error {
-	err := c.Conn.MakePool(name)
+func (r *Rados) createPool(name string) error {
+	err := r.Conn.MakePool(name)
 	return err
 }
 
-// Shutdown close the connection to the Ceph cluster
-func finalizerCeph(c *Ceph) {
-	if c.Conn != nil {
-		c.Conn.Shutdown()
+// Shutdown close the connection to the Rados cluster
+func finalizerRados(r *Rados) {
+	if r.Conn != nil {
+		r.Conn.Shutdown()
 	}
 }
 
-func (c *Ceph) WriteObject(pool string, oid string, data []byte, offset uint64) error {
-	ioctx, err := c.Conn.OpenIOContext(pool)
+func (r *Rados) WriteObject(pool string, oid string, data []byte, offset uint64) error {
+	ioctx, err := r.Conn.OpenIOContext(pool)
 	if err != nil {
 		return err
 	}
@@ -126,8 +126,8 @@ func (c *Ceph) WriteObject(pool string, oid string, data []byte, offset uint64) 
 	return nil
 }
 
-func (c *Ceph) ReadObject(pool string, oid string, data []byte, offset uint64) (int, error) {
-	ioctx, err := c.Conn.OpenIOContext(pool)
+func (r *Rados) ReadObject(pool string, oid string, data []byte, offset uint64) (int, error) {
+	ioctx, err := r.Conn.OpenIOContext(pool)
 	if err != nil {
 		return 0, err
 	}
@@ -139,8 +139,8 @@ func (c *Ceph) ReadObject(pool string, oid string, data []byte, offset uint64) (
 	return num, nil
 }
 
-func (c *Ceph) DeleteObject(pool string, oid string) error {
-	ioctx, err := c.Conn.OpenIOContext(pool)
+func (r *Rados) DeleteObject(pool string, oid string) error {
+	ioctx, err := r.Conn.OpenIOContext(pool)
 	if err != nil {
 		return err
 	}

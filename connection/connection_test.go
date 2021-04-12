@@ -8,7 +8,7 @@ import (
 
 var mysql = NewMySQL("root", "root", "127.0.0.1:3306", "ceph", "utf8mb4")
 var redis = NewRedis("tcp", "127.0.0.1:6379", "")
-var ceph, _ = NewCeph()
+var ceph, _ = NewRados()
 
 func testMain(m *testing.M) {
 	_ = mysql.Init()
