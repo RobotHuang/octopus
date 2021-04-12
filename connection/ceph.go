@@ -3,6 +3,7 @@ package connection
 import (
 	"fmt"
 	"github.com/ceph/go-ceph/rados"
+	"math"
 	"runtime"
 	"time"
 )
@@ -146,4 +147,53 @@ func (r *Rados) DeleteObject(pool string, oid string) error {
 	}
 	defer ioctx.Destroy()
 	return ioctx.Delete(oid)
+}
+
+func (r *Rados) GetXattr(pool string, oid string, name string, data []byte) (int, error) {
+	ioctx, err := r.Conn.OpenIOContext(pool)
+	if err != nil {
+		return 0, err
+	}
+	defer ioctx.Destroy()
+	num, err := ioctx.GetXattr(oid, name, data)
+	if err != nil {
+		return 0, err
+	}
+	return num, nil
+}
+
+func (r *Rados) SetXattr(pool string, oid string, name string, data []byte) error {
+	ioctx, err := r.Conn.OpenIOContext(pool)
+	if err != nil {
+		return err
+	}
+	defer ioctx.Destroy()
+	err = ioctx.SetXattr(oid, name, data)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+func (r *Rados) GetOmap(pool string, oid string) (map[string][]byte, error) {
+	ioctx, err := r.Conn.OpenIOContext(pool)
+	if err != nil {
+		return nil, err
+	}
+	defer ioctx.Destroy()
+	m, err := ioctx.GetOmapValues(oid, "", "", math.MaxInt64)
+	if err != nil {
+		return nil, err
+	}
+	return m, nil
+}
+
+func (r *Rados) SetOmap(pool string, oid string, pairs map[string][]byte) error {
+	ioctx, err := r.Conn.OpenIOContext(pool)
+	if err != nil {
+		return err
+	}
+	defer ioctx.Destroy()
+	err = ioctx.SetOmap(oid, pairs)
+	return err
 }
