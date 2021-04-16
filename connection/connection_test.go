@@ -82,12 +82,27 @@ func TestMySQL(t *testing.T) {
 	fmt.Println("mysql unit test...")
 	t.Run("write", testMySQLPutMetadata)
 	t.Run("read", testMySQLGetMetadata)
+	t.Run("delete", testMySQLDeleteMetadata)
 }
 
 func testMySQLPutMetadata(t *testing.T) {
-
+	fmt.Println("mysql put...")
+	err := sql.PutMetadata(oid, "Hello World")
+	if err != nil {
+		t.Error(err)
+	}
 }
 
 func testMySQLGetMetadata(t *testing.T) {
+	fmt.Println("mysql get...")
+	objectMetadata := sql.GetMetadata(oid)
+	fmt.Println(objectMetadata.Metadata)
+}
 
+func testMySQLDeleteMetadata(t *testing.T) {
+	fmt.Println("mysql delete...")
+	err := sql.DeleteObjectMetadata(oid)
+	if err != nil {
+		t.Error(err)
+	}
 }
