@@ -42,7 +42,7 @@ func (r *Redis) Init() error {
 	return nil
 }
 
-func (r *Redis) SaveMetadata(id, metadata string) error {
+func (r *Redis) PutMetadata(id, metadata string) error {
 	_, err := r.Conn.Do("SET", id, metadata)
 	if err != nil {
 		return err
@@ -56,4 +56,12 @@ func (r *Redis) GetMetadata(id string) (string, error) {
 		return "", err
 	}
 	return reply, nil
+}
+
+func (r *Redis) DeleteMetadata(id string) error {
+	_, err := r.Conn.Do("DEL", id)
+	if err != nil {
+		return err
+	}
+	return nil
 }

@@ -191,7 +191,7 @@ func (m *MySQL) DeleteObjectAcl(aclID string) error {
 	return m.Database.Where("acl_id = ?", aclID).Delete(&ObjectACL{}).Error
 }
 
-func (m *MySQL) SaveMetadata(id, metadata string) error {
+func (m *MySQL) PutMetadata(id, metadata string) error {
 	// save metadata
 	objectMetadata := ObjectMetadata{MetadataID: id, Metadata: metadata}
 	return m.Database.Create(&objectMetadata).Error
