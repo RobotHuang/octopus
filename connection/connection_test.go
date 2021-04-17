@@ -24,6 +24,10 @@ func TestRados(t *testing.T) {
 	fmt.Println("rados unit test...")
 	t.Run("write", testRadosWriteObject)
 	t.Run("read", testRadosReadObject)
+	t.Run("write xattr", testRadosSetXattr)
+	t.Run("read xattr", testRadosGetXattr)
+	t.Run("write omap", testRadosSetOmap)
+	t.Run("read omap", testRadosGetOmap)
 }
 
 func testRadosWriteObject(t *testing.T) {
@@ -43,6 +47,44 @@ func testRadosReadObject(t *testing.T) {
 		t.Error(err)
 	}
 	fmt.Println(string(data))
+}
+
+func testRadosSetXattr(t *testing.T) {
+	fmt.Println("rados set xattr...")
+	err := r.SetXattr(BucketData, oid, "test", []byte("Hello World"))
+	if err != nil {
+		t.Error(err)
+	}
+}
+
+func testRadosGetXattr(t *testing.T) {
+	fmt.Println("rados get xattr...")
+	var data =make([]byte, 1024*1024)
+	n, err := r.GetXattr(BucketData, oid, "test", data)
+	if err != nil {
+		t.Error(err)
+	}
+	fmt.Println(string(data[:n]))
+}
+
+func testRadosSetOmap(t *testing.T) {
+	fmt.Println("rados set omap...")
+	m := make(map[string][]byte)
+	m["first"] = []byte("Hello World")
+	err := r.SetOmap(BucketData, oid, m)
+	if err != nil {
+		t.Error(err)
+	}
+}
+
+func testRadosGetOmap(t *testing.T) {
+	fmt.Println("rados get omap...")
+	m := make(map[string][]byte)
+	m, err := r.GetOmap(BucketData, oid)
+	if err != nil {
+		t.Error(err)
+	}
+	fmt.Println(m["first"])
 }
 
 func TestRedis(t *testing.T) {
