@@ -41,7 +41,7 @@ func testRadosWriteObject(t *testing.T) {
 
 func testRadosReadObject(t *testing.T) {
 	fmt.Println("rados read...")
-	var data =make([]byte, 1024*1024)
+	var data = make([]byte, 1024*1024)
 	_, err := r.ReadObject(BucketData, oid, data, 0)
 	if err != nil {
 		t.Error(err)
@@ -59,7 +59,7 @@ func testRadosSetXattr(t *testing.T) {
 
 func testRadosGetXattr(t *testing.T) {
 	fmt.Println("rados get xattr...")
-	var data =make([]byte, 1024*1024)
+	var data = make([]byte, 1024*1024)
 	n, err := r.GetXattr(BucketData, oid, "test", data)
 	if err != nil {
 		t.Error(err)
@@ -97,7 +97,7 @@ func TestRedis(t *testing.T) {
 func testRedisPutMetadata(t *testing.T) {
 	fmt.Println("redis put...")
 	data := "Hello World"
-	err := re.PutMetadata(oid, data);
+	err := re.SetDataByString(oid, data)
 	if err != nil {
 		t.Error(err)
 	}
@@ -105,7 +105,7 @@ func testRedisPutMetadata(t *testing.T) {
 
 func testRedisGetMetadata(t *testing.T) {
 	fmt.Println("redis get...")
-	data, err := re.GetMetadata(oid)
+	data, err := re.GetDataByString(oid)
 	if err != nil {
 		t.Error(err)
 	}
@@ -114,7 +114,7 @@ func testRedisGetMetadata(t *testing.T) {
 
 func testRedisDeleteMetadata(t *testing.T) {
 	fmt.Println("redis delete...")
-	err := re.DeleteMetadata(oid)
+	err := re.Delete(oid)
 	if err != nil {
 		t.Error(err)
 	}

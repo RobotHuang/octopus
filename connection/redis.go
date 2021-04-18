@@ -9,9 +9,9 @@ type Redis struct {
 	// redis ip address
 	IPAddr string
 	// network transportation protocol, like udp/tcp
-	Network string
+	Network  string
 	Password string
-	Conn redis.Conn
+	Conn     redis.Conn
 }
 
 func finalizerRedis(redis *Redis) {
@@ -42,26 +42,66 @@ func (r *Redis) Init() error {
 	return nil
 }
 
-func (r *Redis) PutMetadata(id, metadata string) error {
-	_, err := r.Conn.Do("SET", id, metadata)
+func (r *Redis) SetDataByString(key, value string) error {
+	_, err := r.Conn.Do("SET", key, value)
 	if err != nil {
 		return err
 	}
 	return nil
 }
 
-func (r *Redis) GetMetadata(id string) (string, error) {
-	reply, err := redis.String(r.Conn.Do("GET", id))
+func (r *Redis) GetDataByString(key string) (string, error) {
+	reply, err := redis.String(r.Conn.Do("GET", key))
 	if err != nil {
 		return "", err
 	}
 	return reply, nil
 }
 
-func (r *Redis) DeleteMetadata(id string) error {
-	_, err := r.Conn.Do("DEL", id)
+func (r *Redis) Delete(key string) error {
+	_, err := r.Conn.Do("DEL", key)
 	if err != nil {
 		return err
 	}
 	return nil
+}
+
+func (r *Redis) RPUSHData(key string, value string) error {
+	_, err := r.Conn.Do("RPUSH", key, value)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+func (r *Redis) RPOPData(key string) error {
+	_, err := r.Conn.Do("RPOP", key)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+func (r *Redis) LREMData(key string, value string, count int) error {
+	_, err := r.Conn.Do("LREM", key, count, value)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+func (r *Redis) GetAllDataInList(key string) ([]string, error) {
+	n, err := redis.Int(r.Conn.Do("LLEN", key))
+	if err != nil {
+		return nil, err
+	}
+	reply, err := redis.ByteSlices(r.Conn.Do("LRANGE", key, 0, n))
+	if err != nil {
+		return nil, err
+	}
+	var result []string
+	for _, v := range reply {
+		result = append(result, string(v[:]))
+	}
+	return result, nil
 }

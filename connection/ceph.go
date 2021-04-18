@@ -9,7 +9,7 @@ import (
 )
 
 type Rados struct {
-	Conn *rados.Conn
+	Conn  *rados.Conn
 	Pools map[string]bool
 }
 
@@ -19,7 +19,7 @@ func NewRados() (*Rados, error) {
 		return nil, err
 	}
 	ceph := &Rados{
-		Conn: conn,
+		Conn:  conn,
 		Pools: make(map[string]bool),
 	}
 
@@ -41,7 +41,7 @@ func NewRadosWithArgs(user, monitors, keyring string) (*Rados, error) {
 		return nil, err
 	}
 	r := &Rados{
-		Conn: conn,
+		Conn:  conn,
 		Pools: make(map[string]bool),
 	}
 	return r, nil

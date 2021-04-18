@@ -14,7 +14,7 @@ func BenchmarkRadosWriteObject100(b *testing.B) {
 }
 
 func BenchmarkRadosReadObject100(b *testing.B) {
-	var data = make([]byte, 1024 * 1024)
+	var data = make([]byte, 1024*1024)
 	b.ResetTimer()
 	for i := 0; i < 100; i++ {
 		_, _ = r.ReadObject(BucketData, strconv.Itoa(i), data, 0)
@@ -30,7 +30,7 @@ func BenchmarkRadosSetXattr100(b *testing.B) {
 }
 
 func BenchmarkRadosGetXattr100(b *testing.B) {
-	var data = make([]byte, 1024 * 1024)
+	var data = make([]byte, 1024*1024)
 	b.ResetTimer()
 	for i := 0; i < 100; i++ {
 		_, _ = r.GetXattr(BucketData, oid, strconv.Itoa(i), data)
@@ -54,21 +54,21 @@ func BenchmarkRadosSetOmap100(b *testing.B) {
 func BenchmarkRadosGetOmap100(b *testing.B) {
 	b.ResetTimer()
 	for i := 0; i < 100; i++ {
-		_,_  = r.GetOmap(BucketData, oid)
+		_, _ = r.GetOmap(BucketData, oid)
 	}
 }
 
 func BenchmarkRedisPutMetadata100(b *testing.B) {
 	b.ResetTimer()
 	for i := 0; i < 100; i++ {
-		_ = re.PutMetadata(strconv.Itoa(i), "metadata")
+		_ = re.SetDataByString(strconv.Itoa(i), "metadata")
 	}
 }
 
 func BenchmarkRedisGetMetadata100(b *testing.B) {
 	b.ResetTimer()
 	for i := 0; i < 100; i++ {
-		_, _ = re.GetMetadata(strconv.Itoa(i))
+		_, _ = re.GetDataByString(strconv.Itoa(i))
 	}
 }
 
@@ -85,5 +85,3 @@ func BenchmarkMySQLGetMetadata100(b *testing.B) {
 		_ = sql.GetMetadata(strconv.Itoa(i))
 	}
 }
-
-
