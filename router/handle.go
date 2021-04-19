@@ -57,5 +57,16 @@ func putObject(c *gin.Context) {
 }
 
 func getObject(c *gin.Context) {
-
+	bucketName := c.Param("bucket")
+	objectName := c.Param("object")
+	content, err := session.GetObject(bucketName, objectName)
+	if err == nil {
+		c.Writer.WriteHeader(http.StatusOK)
+		c.Header("Content-Disposition", "attachment; filename="+objectName)
+		c.Header("Content-Type", "application/text/plain")
+		c.Header("Accept-Length", fmt.Sprintf("%d", len(content)))
+		_, _ = c.Writer.Write(content)
+	} else {
+		c.Status(http.StatusInternalServerError)
+	}
 }

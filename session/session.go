@@ -96,3 +96,22 @@ func PutObject(bucketName, objectName string, object io.ReadCloser, hash string,
 	}
 	return nil
 }
+
+func GetObject(bucketName, objectName string) ([]byte, error) {
+	oid := strings.Join([]string{bucketName, objectName}, ",")
+	var data []byte
+	datacache := make([]byte, 1024*1024)
+	var offset uint64 = 0
+	for {
+		n, err := RadosMgr.Rados.ReadObject(BucketData, oid, datacache, offset)
+		if err != nil {
+			return nil, err
+		}
+		if n == 0 {
+			break
+		}
+		data = append(data, datacache[:n]...)
+		offset = uint64(n)
+	}
+	return data, nil
+}
