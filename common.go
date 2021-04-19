@@ -1,5 +1,8 @@
 package main
 
+// oid = bucketName.ObjectName
+// metadataId = bucketName.ObjectName-metadata
+
 // BucketInfo is bucket's information
 type BucketInfo struct {
 	BucketId   string `json:"bucketId"`
