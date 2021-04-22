@@ -8,6 +8,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+	"octopus/cache"
 	. "octopus/connection"
 	"octopus/util"
 	"strings"
@@ -114,4 +115,58 @@ func GetObject(bucketName, objectName string) ([]byte, error) {
 		offset = uint64(n)
 	}
 	return data, nil
+}
+
+// 5MB
+const smallFileSize = 5 * 1024 * 1024
+
+func PutObjectWithCache(bucketName, objectName string, object io.ReadCloser, hash string, metadataM map[string][]string) (err error) {
+	var objectCache = make([]byte, 1024 * 1024)
+	var data []byte
+	for {
+		n, err := object.Read(objectCache)
+		if err != nil && err != io.EOF {
+			return err
+		}
+		data = append(data, objectCache[:n]...)
+		if err == io.EOF {
+			break
+		}
+	}
+
+	check := md5.New()
+	hashCache := bufio.NewReader(bytes.NewReader(data))
+	_, err = io.Copy(check, hashCache)
+	if err != nil {
+		return err
+	}
+	hashC := base64.StdEncoding.EncodeToString(check.Sum(nil))
+	if hashC != hash {
+		return fmt.Errorf("hash inconsistency && hash is %s", hashC)
+	}
+	oid := strings.Join([]string{bucketName, objectName}, ".")
+	if smallFileSize >=  len(data) {
+		metadata, err := json.Marshal(&metadataM)
+		if err != nil {
+			return
+		}
+		cache.Cache.Put(oid, string(metadata), data)
+		return nil
+	} else {
+		err = RadosMgr.Rados.WriteObject(BucketData, oid, data, 0)
+		if err != nil {
+			return
+		}
+
+		metadata, err := json.Marshal(&metadataM)
+		if err != nil {
+			return
+		}
+		metadataId := oid + "-metadata"
+		err = RedisMgr.Redis.SetDataByString(metadataId, string(metadata))
+		if err != nil {
+			return err
+		}
+		return nil
+	}
 }

@@ -4,6 +4,7 @@ import (
 	"flag"
 	"fmt"
 	"github.com/gin-gonic/gin"
+	"octopus/cache"
 	"octopus/connection"
 	"octopus/router"
 )
@@ -28,6 +29,10 @@ func main() {
 	if err := r.InitDefault(); err != nil {
 		fmt.Println(err)
 		return
+	}
+	if cacheFlag == true {
+		c := cache.NewLRUCache(10, 10)
+		cache.InitCache(c)
 	}
 	var g *gin.Engine
 	g = router.SetRouter()

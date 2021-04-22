@@ -10,6 +10,8 @@ import (
 // 1st cache is LRUCache
 // 2nd cache is FileChunk
 
+var Cache *LRUCache
+
 type FileChunk struct {
 	Size int
 	Capacity int
@@ -55,7 +57,7 @@ func newDLinkedNode(object *ObjectChunk) *DLinkedNode {
 	}
 }
 
-func newObjectChunk(oid string, data []byte) *ObjectChunk {
+func newObjectChunk(oid string, metadata string, data []byte) *ObjectChunk {
 	return &ObjectChunk{
 		ObjectId: oid,
 		Data: data,
@@ -63,6 +65,9 @@ func newObjectChunk(oid string, data []byte) *ObjectChunk {
 	}
 }
 
+// NewLRUCache new a LRU cache struct
+// capacity is the number of cache
+// chunkCapacity is the number of objects in one chunk
 func NewLRUCache(capacity int, chunkCapacity int) *LRUCache {
 	return &LRUCache{
 		size: 0,
@@ -74,6 +79,10 @@ func NewLRUCache(capacity int, chunkCapacity int) *LRUCache {
 			Capacity: chunkCapacity,
 		},
 	}
+}
+
+func InitCache(cache *LRUCache) {
+	Cache = cache
 }
 
 func (l *LRUCache) Get(oid string) []byte {
@@ -93,9 +102,9 @@ func (f *FileChunk) GetFromChunk(oid string) []byte {
 	return nil
 }
 
-func (l *LRUCache) Put(oid string, data []byte) {
+func (l *LRUCache) Put(oid string, metadata string, data []byte) {
 	if _, ok := l.cache[oid]; !ok {
-		node := newDLinkedNode(newObjectChunk(oid, data))
+		node := newDLinkedNode(newObjectChunk(oid, metadata, data))
 		l.cache[oid] = node
 		l.addToHead(node)
 		l.size++
@@ -165,7 +174,7 @@ func (f *FileChunk) writeToRados() (err error) {
 		if err != nil {
 			return err
 		}
-		err = RedisMgr.Redis.SetDataByString(object.ObjectId + "-metadata", string(objectInfoByte))
+		err = RedisMgr.Redis.SetDataByString(object.ObjectId+"-metadata", string(objectInfoByte))
 		if err != nil {
 			return err
 		}
