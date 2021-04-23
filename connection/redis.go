@@ -105,3 +105,11 @@ func (r *Redis) GetAllDataInList(key string) ([]string, error) {
 	}
 	return result, nil
 }
+
+func (r *Redis) ExistsKey(key string) (bool, error){
+	exist, err := redis.Bool(r.Conn.Do("EXISTS", key))
+	if err != nil {
+		return false, err
+	}
+	return exist, nil
+}

@@ -170,3 +170,46 @@ func PutObjectWithCache(bucketName, objectName string, object io.ReadCloser, has
 		return nil
 	}
 }
+
+func GetObjectWithCache(bucketName, objectName string) ([]byte, error) {
+	oid := strings.Join([]string{bucketName, objectName}, ",")
+	if exists, err := RedisMgr.Redis.ExistsKey(oid + "-metadata-s"); err != nil && exists {
+		// get from cache
+		dataFromCache := cache.Cache.Get(oid)
+		if dataFromCache != nil {
+			return dataFromCache, nil
+		}
+		// get from rados
+		objectInfoStr, err := RedisMgr.Redis.GetDataByString(oid + "-metadata-s")
+		if err != nil {
+			return nil, err
+		}
+		var objectInfo cache.ObjectInfo
+		err = json.Unmarshal([]byte(objectInfoStr), &objectInfo)
+		if err != nil {
+			return nil, err
+		}
+		data := make([]byte, 5 * 1024 * 1024)
+		n, err := RadosMgr.Rados.ReadObject(BucketData, objectInfo.ParentId, data, uint64(objectInfo.Offset))
+		if err != nil {
+			return nil, err
+		}
+		return data[:n], nil
+	} else {
+		var data []byte
+		datacache := make([]byte, 1024*1024)
+		var offset uint64 = 0
+		for {
+			n, err := RadosMgr.Rados.ReadObject(BucketData, oid, datacache, offset)
+			if err != nil {
+				return nil, err
+			}
+			if n == 0 {
+				break
+			}
+			data = append(data, datacache[:n]...)
+			offset = uint64(n)
+		}
+		return data, nil
+	}
+}

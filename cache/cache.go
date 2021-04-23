@@ -42,6 +42,7 @@ type ObjectChunk struct {
 }
 
 type ObjectInfo struct {
+	ParentId string `json:"parentId"`
 	ObjectId string `json:"objectId"`
 	Offset int `json:"offset"`
 	Size int `json:"size"`
@@ -89,7 +90,8 @@ func (l *LRUCache) Get(oid string) []byte {
 	if _, ok := l.cache[oid]; !ok {
 		return l.fileChunk.GetFromChunk(oid)
 	}
-	node := l.cache[oid]
+	node, _ := l.cache[oid]
+	l.moveToHead(node)
 	return node.object.Data
 }
 
@@ -151,6 +153,9 @@ func (f *FileChunk) mergeToChunk(object *ObjectChunk) {
 	}
 }
 
+// write fileChunk to Rados
+// In Redis
+// objectId-metadata-s -> metadata, including object's size, offset and metadata
 func (f *FileChunk) writeToRados() (err error) {
 	var data []byte
 	for _, object := range f.Objects {
@@ -164,6 +169,7 @@ func (f *FileChunk) writeToRados() (err error) {
 	}
 	for _, object := range f.Objects {
 		objectInfo := ObjectInfo{
+			oid,
 			object.ObjectId,
 			object.Offset,
 			object.Size,
@@ -174,7 +180,7 @@ func (f *FileChunk) writeToRados() (err error) {
 		if err != nil {
 			return err
 		}
-		err = RedisMgr.Redis.SetDataByString(object.ObjectId+"-metadata", string(objectInfoByte))
+		err = RedisMgr.Redis.SetDataByString(object.ObjectId+"-metadata-s", string(objectInfoByte))
 		if err != nil {
 			return err
 		}
