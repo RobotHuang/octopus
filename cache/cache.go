@@ -6,6 +6,8 @@ import (
 	"octopus/util"
 )
 
+// TODO: 2nd Method: When object is written to LRUCache, it also is written to FileChunk.
+
 // 2-level cache
 // 1st cache is LRUCache
 // 2nd cache is FileChunk
@@ -39,6 +41,8 @@ type ObjectChunk struct {
 	ETag     string
 	Metadata string
 	Data     []byte
+	Update   bool
+	Written  bool
 }
 
 type ObjectInfo struct {
@@ -58,11 +62,13 @@ func newDLinkedNode(object *ObjectChunk) *DLinkedNode {
 	}
 }
 
-func newObjectChunk(oid string, metadata string, data []byte) *ObjectChunk {
+func NewObjectChunk(oid string, metadata string, data []byte, update, written bool) *ObjectChunk {
 	return &ObjectChunk{
 		ObjectId: oid,
 		Data:     data,
 		Size:     len(data),
+		Update: update,
+		Written: written,
 	}
 }
 
@@ -107,21 +113,24 @@ func (f *FileChunk) GetFromChunk(oid string) []byte {
 	return nil
 }
 
-func (l *LRUCache) Put(oid string, metadata string, data []byte) {
+func (l *LRUCache) Put(oid string, objectChunk *ObjectChunk) {
 	if _, ok := l.cache[oid]; !ok {
-		node := newDLinkedNode(newObjectChunk(oid, metadata, data))
+		node := newDLinkedNode(objectChunk)
 		l.cache[oid] = node
 		l.addToHead(node)
 		l.size++
 		if l.size > l.capacity {
 			removed := l.removeTail()
-			l.fileChunk.mergeToChunk(removed.object)
+			if !removed.object.Written || removed.object.Update {
+				l.fileChunk.mergeToChunk(removed.object)
+			}
 			delete(l.cache, removed.object.ObjectId)
 			l.size--
 		}
 	} else {
 		node := l.cache[oid]
-		node.object.Data = data
+		node.object.Data = objectChunk.Data
+		node.object.Update = true
 		l.moveToHead(node)
 	}
 }
