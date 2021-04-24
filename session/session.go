@@ -99,7 +99,7 @@ func PutObject(bucketName, objectName string, object io.ReadCloser, hash string,
 }
 
 func GetObject(bucketName, objectName string) ([]byte, error) {
-	oid := strings.Join([]string{bucketName, objectName}, ",")
+	oid := strings.Join([]string{bucketName, objectName}, ".")
 	var data []byte
 	datacache := make([]byte, 1024*1024)
 	var offset uint64 = 0
