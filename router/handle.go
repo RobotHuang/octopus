@@ -46,7 +46,8 @@ func putObject(c *gin.Context) {
 	metadata["Content-MD5"] = hashs
 	bucketName := c.Param("bucket")
 	objectName := c.Param("object")
-	err := session.PutObject(bucketName, objectName, body, hash, metadata)
+	//err := session.PutObject(bucketName, objectName, body, hash, metadata)
+	err := session.PutObjectWithCache(bucketName, objectName, body, hash, metadata)
 	if err != nil {
 		c.String(http.StatusInternalServerError, fmt.Sprintf("%v", err))
 		return
@@ -59,7 +60,8 @@ func putObject(c *gin.Context) {
 func getObject(c *gin.Context) {
 	bucketName := c.Param("bucket")
 	objectName := c.Param("object")
-	content, err := session.GetObject(bucketName, objectName)
+	//content, err := session.GetObject(bucketName, objectName)
+	content, err := session.GetObjectWithCache(bucketName, objectName)
 	if err == nil {
 		c.Writer.WriteHeader(http.StatusOK)
 		c.Header("Content-Disposition", "attachment; filename="+objectName)

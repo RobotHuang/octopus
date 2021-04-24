@@ -121,7 +121,7 @@ func GetObject(bucketName, objectName string) ([]byte, error) {
 const smallFileSize = 5 * 1024 * 1024
 
 func PutObjectWithCache(bucketName, objectName string, object io.ReadCloser, hash string, metadataM map[string][]string) (err error) {
-	var objectCache = make([]byte, 1024 * 1024)
+	var objectCache = make([]byte, 1024*1024)
 	var data []byte
 	for {
 		n, err := object.Read(objectCache)
@@ -145,7 +145,7 @@ func PutObjectWithCache(bucketName, objectName string, object io.ReadCloser, has
 		return fmt.Errorf("hash inconsistency && hash is %s", hashC)
 	}
 	oid := strings.Join([]string{bucketName, objectName}, ".")
-	if smallFileSize >=  len(data) {
+	if smallFileSize >= len(data) {
 		metadata, err := json.Marshal(&metadataM)
 		if err != nil {
 			return err
@@ -172,13 +172,16 @@ func PutObjectWithCache(bucketName, objectName string, object io.ReadCloser, has
 }
 
 func GetObjectWithCache(bucketName, objectName string) ([]byte, error) {
-	oid := strings.Join([]string{bucketName, objectName}, ",")
-	if exists, err := RedisMgr.Redis.ExistsKey(oid + "-metadata-s"); err != nil && exists {
-		// get from cache
-		dataFromCache := cache.Cache.Get(oid)
-		if dataFromCache != nil {
-			return dataFromCache, nil
-		}
+	oid := strings.Join([]string{bucketName, objectName}, ".")
+	// Small file 1. from cache 2. from rados
+	// big file from rados
+	// get from cache
+	dataFromCache := cache.Cache.Get(oid)
+	if dataFromCache != nil {
+		return dataFromCache, nil
+	}
+	exists, err := RedisMgr.Redis.ExistsKey(oid + "-metadata-s")
+	if  err == nil && exists {
 		// get from rados
 		objectInfoStr, err := RedisMgr.Redis.GetDataByString(oid + "-metadata-s")
 		if err != nil {
@@ -189,12 +192,12 @@ func GetObjectWithCache(bucketName, objectName string) ([]byte, error) {
 		if err != nil {
 			return nil, err
 		}
-		data := make([]byte, 5 * 1024 * 1024)
-		n, err := RadosMgr.Rados.ReadObject(BucketData, objectInfo.ParentId, data, uint64(objectInfo.Offset))
+		data := make([]byte, objectInfo.Size)
+		_, err = RadosMgr.Rados.ReadObject(BucketData, objectInfo.ParentId, data, uint64(objectInfo.Offset))
 		if err != nil {
 			return nil, err
 		}
-		return data[:n], nil
+		return data, nil
 	} else {
 		var data []byte
 		datacache := make([]byte, 1024*1024)

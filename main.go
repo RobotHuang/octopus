@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"github.com/gin-gonic/gin"
+	"octopus/cache"
 	"octopus/connection"
 	"octopus/router"
 )
@@ -34,6 +35,8 @@ func main() {
 	//	c := cache.NewLRUCache(10, 10)
 	//	cache.InitCache(c)
 	//}
+	c := cache.NewLRUCache(3, 3)
+	cache.InitCache(c)
 	var g *gin.Engine
 	g = router.SetRouter()
 	if err := g.Run(":8080"); err != nil {

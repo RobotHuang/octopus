@@ -13,56 +13,56 @@ import (
 var Cache *LRUCache
 
 type FileChunk struct {
-	Size int
+	Size     int
 	Capacity int
-	Objects []*ObjectChunk
+	Objects  []*ObjectChunk
 }
 
 type LRUCache struct {
-	size int
+	size     int
 	capacity int
 	// key is oid
-	cache map[string]*DLinkedNode
+	cache      map[string]*DLinkedNode
 	head, tail *DLinkedNode
-	fileChunk *FileChunk
+	fileChunk  *FileChunk
 }
 
 type DLinkedNode struct {
-	object *ObjectChunk
+	object     *ObjectChunk
 	prev, next *DLinkedNode
 }
 
 type ObjectChunk struct {
 	ObjectId string
-	Offset int
-	Size int
-	ETag string
+	Offset   int
+	Size     int
+	ETag     string
 	Metadata string
-	Data []byte
+	Data     []byte
 }
 
 type ObjectInfo struct {
 	ParentId string `json:"parentId"`
 	ObjectId string `json:"objectId"`
-	Offset int `json:"offset"`
-	Size int `json:"size"`
-	ETag string `json:"etag"`
+	Offset   int    `json:"offset"`
+	Size     int    `json:"size"`
+	ETag     string `json:"etag"`
 	Metadata string `json:"metadata"`
 }
 
 func newDLinkedNode(object *ObjectChunk) *DLinkedNode {
 	return &DLinkedNode{
 		object: object,
-		prev: nil,
-		next: nil,
+		prev:   nil,
+		next:   nil,
 	}
 }
 
 func newObjectChunk(oid string, metadata string, data []byte) *ObjectChunk {
 	return &ObjectChunk{
 		ObjectId: oid,
-		Data: data,
-		Size: len(data),
+		Data:     data,
+		Size:     len(data),
 	}
 }
 
@@ -70,16 +70,19 @@ func newObjectChunk(oid string, metadata string, data []byte) *ObjectChunk {
 // capacity is the number of cache
 // chunkCapacity is the number of objects in one chunk
 func NewLRUCache(capacity int, chunkCapacity int) *LRUCache {
-	return &LRUCache{
-		size: 0,
+	l := LRUCache{
+		size:     0,
 		capacity: capacity,
-		cache: make(map[string]*DLinkedNode),
-		head: newDLinkedNode(nil),
-		tail: newDLinkedNode(nil),
+		cache:    make(map[string]*DLinkedNode),
+		head:     newDLinkedNode(nil),
+		tail:     newDLinkedNode(nil),
 		fileChunk: &FileChunk{
 			Capacity: chunkCapacity,
 		},
 	}
+	l.head.next = l.tail
+	l.tail.prev = l.head
+	return &l
 }
 
 func InitCache(cache *LRUCache) {
@@ -186,5 +189,7 @@ func (f *FileChunk) writeToRados() (err error) {
 			return err
 		}
 	}
+	f.Size = 0
+	f.Objects = f.Objects[:0]
 	return nil
 }

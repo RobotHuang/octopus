@@ -94,6 +94,14 @@ func TestRedis(t *testing.T) {
 	t.Run("delete", testRedisDeleteMetadata)
 }
 
+func TestRedisExistsKey(t *testing.T) {
+	exists, err := re.ExistsKey("bucket1.object0s-metadata-s")
+	if err != nil {
+		t.Error(err)
+	}
+	fmt.Println(exists)
+}
+
 func testRedisPutMetadata(t *testing.T) {
 	fmt.Println("redis put...")
 	data := "Hello World"
