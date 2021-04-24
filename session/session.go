@@ -148,7 +148,7 @@ func PutObjectWithCache(bucketName, objectName string, object io.ReadCloser, has
 	if smallFileSize >=  len(data) {
 		metadata, err := json.Marshal(&metadataM)
 		if err != nil {
-			return
+			return err
 		}
 		cache.Cache.Put(oid, string(metadata), data)
 		return nil
@@ -160,7 +160,7 @@ func PutObjectWithCache(bucketName, objectName string, object io.ReadCloser, has
 
 		metadata, err := json.Marshal(&metadataM)
 		if err != nil {
-			return
+			return err
 		}
 		metadataId := oid + "-metadata"
 		err = RedisMgr.Redis.SetDataByString(metadataId, string(metadata))
