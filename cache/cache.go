@@ -113,6 +113,7 @@ func (l *LRUCache) Put(oid string, metadata string, data []byte) {
 		if l.size > l.capacity {
 			removed := l.removeTail()
 			l.fileChunk.mergeToChunk(removed.object)
+			delete(l.cache, removed.object.ObjectId)
 			l.size--
 		}
 	} else {
