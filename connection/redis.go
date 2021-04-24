@@ -107,6 +107,6 @@ func (r *Redis) GetAllDataInList(key string) ([]string, error) {
 }
 
 func (r *Redis) ExistsKey(key string) (bool, error) {
-	exists,err := redis.Bool(r.Conn.Do("EXISTS", key))
+	exists, err := redis.Bool(r.Conn.Do("EXISTS", key))
 	return exists, err
 }

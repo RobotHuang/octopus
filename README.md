@@ -39,3 +39,10 @@ Redis version: 6.2.1
 |BenchmarkMySQLGetMetadata100|1000000000|0.05409 ns/op|  
 |BenchmarkMySQLGetMetadata100|1000000000|0.03049 ns/op|  
 (MySQL needed to be tested further)  
+
+||benchmark|times|average time|
+|--|--|--|--|
+|1|BenchmarkGetObjectWithCache|1543|788967 ns/op|
+|2|BenchmarkGetObjectWithCache|1672|734345 ns/op|
+|3|BenchmarkGetObjectWithCache|1616|726735 ns/op|
+|1|BenchmarkGetObject|902|1301964 ns/op|

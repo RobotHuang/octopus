@@ -15,12 +15,13 @@ const ip = "http://localhost:8080"
 func main() {
 	CreateBucket("bucket1")
 	ListBucket()
-	for i := 0; i < 7; i++ {
+	for i := 0; i < 1000; i++ {
 		PutObject("bucket1", "object"+strconv.Itoa(i)+"s", []byte("Hello World"))
+		//PutObject("bucket1", "object"+strconv.Itoa(i), []byte("Hello World"))
 	}
-	for i := 0; i < 7; i++ {
-		GetObject("bucket1", "object"+strconv.Itoa(i)+"s")
-	}
+	//for i := 0; i < 1000; i++ {
+	//	GetObject("bucket1", "object"+strconv.Itoa(i)+"s")
+	//}
 	//GetObject("bucket1", "object"+strconv.Itoa(0)+"s")
 }
 
@@ -85,7 +86,7 @@ func GetObject(bucketName, objectName string) {
 	client := http.Client{}
 	request, _ := http.NewRequest("GET", ip+"/download/"+bucketName+"/"+objectName, nil)
 	rep, _ := client.Do(request)
-	data, _ := ioutil.ReadAll(rep.Body)
-	fmt.Printf("%v\n", string(data))
+	//data, _ := ioutil.ReadAll(rep.Body)
+	//fmt.Printf("%v\n", string(data))
 	_ = rep.Body.Close()
 }

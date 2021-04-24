@@ -35,7 +35,7 @@ func main() {
 	//	c := cache.NewLRUCache(10, 10)
 	//	cache.InitCache(c)
 	//}
-	c := cache.NewLRUCache(3, 3)
+	c := cache.NewLRUCache(100, 10)
 	cache.InitCache(c)
 	var g *gin.Engine
 	g = router.SetRouter()
