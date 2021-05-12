@@ -2,8 +2,10 @@ package cache
 
 import (
 	"encoding/json"
+	"fmt"
 	. "octopus/connection"
 	"octopus/util"
+	"time"
 )
 
 // TODO: 2nd Method: When object is written to LRUCache, it also is written to FileChunk.
@@ -24,6 +26,7 @@ type LRUCache struct {
 	size     int
 	capacity int
 	// key is oid
+	// TODO Modify to map of thread safe
 	cache      map[string]*DLinkedNode
 	head, tail *DLinkedNode
 	fileChunk  *FileChunk
@@ -43,6 +46,7 @@ type ObjectChunk struct {
 	Data     []byte
 	Update   bool
 	Written  bool
+	Weight   int // When weight is below the threshold, this object would be deleted from cache.
 }
 
 type ObjectInfo struct {
@@ -62,13 +66,14 @@ func newDLinkedNode(object *ObjectChunk) *DLinkedNode {
 	}
 }
 
-func NewObjectChunk(oid string, metadata string, data []byte, update, written bool) *ObjectChunk {
+func NewObjectChunk(oid string, metadata string, data []byte, update, written bool, weight int) *ObjectChunk {
 	return &ObjectChunk{
 		ObjectId: oid,
 		Data:     data,
 		Size:     len(data),
-		Update: update,
-		Written: written,
+		Update:   update,
+		Written:  written,
+		Weight:   weight,
 	}
 }
 
@@ -93,6 +98,31 @@ func NewLRUCache(capacity int, chunkCapacity int) *LRUCache {
 
 func InitCache(cache *LRUCache) {
 	Cache = cache
+	fmt.Println("Init Monitor...")
+	go Cache.DeleteCacheMonitor()
+}
+
+func (l *LRUCache) DeleteCacheMonitor() {
+	for {
+		// TODO make sure thread safe
+		for k, v := range l.cache {
+			// Threshold 0
+			if v.object.Weight < 0 {
+				// free memory
+				l.removeNode(v)
+				if !v.object.Written || v.object.Update {
+					l.fileChunk.mergeToChunk(v.object)
+				}
+				delete(l.cache, k)
+				l.size--
+				fmt.Println("Remove From Cache...", k)
+			} else {
+				v.object.Weight--
+			}
+		}
+		// TODO modify sleep time
+		time.Sleep(5 * time.Minute)
+	}
 }
 
 func (l *LRUCache) Get(oid string) []byte {
@@ -100,6 +130,7 @@ func (l *LRUCache) Get(oid string) []byte {
 		return l.fileChunk.GetFromChunk(oid)
 	}
 	node, _ := l.cache[oid]
+	node.object.Weight = 5
 	l.moveToHead(node)
 	return node.object.Data
 }

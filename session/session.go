@@ -150,7 +150,7 @@ func PutObjectWithCache(bucketName, objectName string, object io.ReadCloser, has
 		if err != nil {
 			return err
 		}
-		cache.Cache.Put(oid, cache.NewObjectChunk(oid, string(metadata), data, false, false))
+		cache.Cache.Put(oid, cache.NewObjectChunk(oid, string(metadata), data, false, false, 5))
 		return nil
 	} else {
 		err = RadosMgr.Rados.WriteObject(BucketData, oid, data, 0)
@@ -195,7 +195,7 @@ func GetObjectWithCache(bucketName, objectName string) ([]byte, error) {
 		data := make([]byte, objectInfo.Size)
 		_, err = RadosMgr.Rados.ReadObject(BucketData, objectInfo.ParentId, data, uint64(objectInfo.Offset))
 
-		cache.Cache.Put(oid, cache.NewObjectChunk(oid, objectInfo.Metadata, data, false, true))
+		cache.Cache.Put(oid, cache.NewObjectChunk(oid, objectInfo.Metadata, data, false, true, 5))
 		if err != nil {
 			return nil, err
 		}
